@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "container:"
+      name = "Metadata">
+      <FileRef
+         location = "group:FluxLayout.podspec">
+      </FileRef>
+      <FileRef
+         location = "group:README.md">
+      </FileRef>
+   </Group>
+   <FileRef
+      location = "group:Example/FluxLayoutSample.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:FluxLayout.xcodeproj">
+   </FileRef>
+</Workspace>
