@@ -25,72 +25,34 @@ extension Flux
             
             itemView.translatesAutoresizingMaskIntoConstraints = false
             
-            if index == 0
-            {
-                let constant = item.topMargin.value
-                
-                if justifyContent == .center || justifyContent == .end
-                {
-                    constraints.append(itemView.topAnchor.constraint(greaterThanOrEqualTo: hostView.topAnchor, constant: constant))
-                }
-                else
-                {
-                    constraints.append(itemView.topAnchor.constraint(equalTo: hostView.topAnchor, constant: constant))
-                }
-            }
-            else if let prev = items[index-1].view
-            {
-                let constant = item.topMargin.value + items[index-1].bottomMargin.value
-                
-                if justifyContent == .spaceBetween
-                {
-                    constraints.append(itemView.topAnchor.constraint(greaterThanOrEqualTo: prev.bottomAnchor, constant: constant))
-                }
-                else
-                {
-                    constraints.append(itemView.topAnchor.constraint(equalTo: prev.bottomAnchor, constant: constant))
-                }
-            }
+            let prevItem = index > 0 ? items[index-1] : nil
             
-            if itemAlign == .stretch || itemAlign == .start
+            if let start = Flux.makeMainStart(item: item, prevItem: prevItem, hostItem: self)
             {
-                let constant = item.leftMargin.value
-                constraints.append(itemView.leftAnchor.constraint(equalTo: hostView.leftAnchor, constant: constant))
-            }
-            else
-            {
-                let constant = item.leftMargin.value
-                constraints.append(itemView.leftAnchor.constraint(greaterThanOrEqualTo: hostView.leftAnchor, constant: constant))
-            }
-            
-            if itemAlign == .stretch || itemAlign == .end
-            {
-                let constant = -item.rightMargin.value
-                constraints.append(itemView.rightAnchor.constraint(equalTo: hostView.rightAnchor, constant: constant))
-            }
-            else
-            {
-                let constant = -item.rightMargin.value
-                constraints.append(itemView.rightAnchor.constraint(lessThanOrEqualTo: hostView.rightAnchor, constant: constant))
+                constraints.append(start)
             }
             
             if index == lastItemIndex
             {
-                if justifyContent == .center || justifyContent == .start
+                if let end = Flux.makeMainEnd(item: item, hostItem: self)
                 {
-                    let constant = -item.bottomMargin.value
-                    constraints.append(itemView.bottomAnchor.constraint(lessThanOrEqualTo: hostView.bottomAnchor, constant: constant))
-                }
-                else
-                {
-                    let constant = -item.bottomMargin.value
-                    constraints.append(itemView.bottomAnchor.constraint(equalTo: hostView.bottomAnchor, constant: constant))
+                    constraints.append(end)
                 }
             }
             
-            if itemAlign == .center
+            if let start = Flux.makeCrossStart(item: item, hostItem: self)
             {
-                constraints.append(itemView.centerXAnchor.constraint(equalTo: hostView.centerXAnchor))
+                constraints.append(start)
+            }
+            
+            if let end = Flux.makeCrossEnd(item: item, hostItem: self)
+            {
+                constraints.append(end)
+            }
+            
+            if itemAlign == .center, let center = Flux.makeCrossCenter(item: item, hostItem: self)
+            {
+                constraints.append(center)
             }
             
             if let width = item.width
@@ -108,17 +70,36 @@ extension Flux
                 let gap = UILayoutGuide()
                 gap.identifier = "gap-\(index-1)-\(index)"
                 
+                let isVertical = (self.axis == .vertical)
+                
                 if let lastGap = gapGuides.last
                 {
-                    constraints.append(lastGap.heightAnchor.constraint(equalTo: gap.heightAnchor))
+                    let attribute: NSLayoutConstraint.Attribute = isVertical ? .height : .width
+                    
+                    constraints.append(NSLayoutConstraint(item: lastGap, attribute: attribute,
+                                                          relatedBy: .equal,
+                                                          toItem: gap, attribute: attribute,
+                                                          multiplier: 1, constant: 0))
                 }
                 
-                if let prev = items[index-1].view
+                if let prev = prevItem?.view
                 {
-                    constraints.append(gap.topAnchor.constraint(equalTo: prev.bottomAnchor))
+                    let attribute1: NSLayoutConstraint.Attribute = isVertical ? .top : .left
+                    let attribute2: NSLayoutConstraint.Attribute = isVertical ? .bottom : .right
+                    
+                    constraints.append(NSLayoutConstraint(item: gap, attribute: attribute1,
+                                                          relatedBy: .equal,
+                                                          toItem: prev, attribute: attribute2,
+                                                          multiplier: 1, constant: 0))
                 }
                 
-                constraints.append(gap.bottomAnchor.constraint(equalTo: itemView.topAnchor))
+                let attribute1: NSLayoutConstraint.Attribute = isVertical ? .bottom : .right
+                let attribute2: NSLayoutConstraint.Attribute = isVertical ? .top : .left
+                
+                constraints.append(NSLayoutConstraint(item: gap, attribute: attribute1,
+                                                      relatedBy: .equal,
+                                                      toItem: itemView, attribute: attribute2,
+                                                      multiplier: 1, constant: 0))
                 
                 hostView.addLayoutGuide(gap)
                 gapGuides.append(gap)
@@ -126,13 +107,25 @@ extension Flux
             
             if justifyContent == .center
             {
+                let isVertical = (self.axis == .vertical)
+                
                 if index == 0
                 {
                     let gap = UILayoutGuide()
-                    gap.identifier = "gapTop"
+                    gap.identifier = isVertical ? "gapTop" : "gapLeft"
                     
-                    constraints.append(hostView.topAnchor.constraint(equalTo: gap.topAnchor))
-                    constraints.append(itemView.topAnchor.constraint(equalTo: gap.bottomAnchor))
+                    let attribute1: NSLayoutConstraint.Attribute = isVertical ? .top : .left
+                    let attribute2: NSLayoutConstraint.Attribute = isVertical ? .bottom : .right
+                    
+                    constraints.append(NSLayoutConstraint(item: hostView, attribute: attribute1,
+                                                          relatedBy: .equal,
+                                                          toItem: gap, attribute: attribute1,
+                                                          multiplier: 1, constant: 0))
+                    
+                    constraints.append(NSLayoutConstraint(item: itemView, attribute: attribute1,
+                                                          relatedBy: .equal,
+                                                          toItem: gap, attribute: attribute2,
+                                                          multiplier: 1, constant: 0))
                     
                     hostView.addLayoutGuide(gap)
                     gapGuides.append(gap)
@@ -140,14 +133,30 @@ extension Flux
                 else if index == lastItemIndex
                 {
                     let gap = UILayoutGuide()
-                    gap.identifier = "gapBottom"
+                    gap.identifier = isVertical ? "gapBottom" : "gapRight"
                     
-                    constraints.append(hostView.bottomAnchor.constraint(equalTo: gap.bottomAnchor))
-                    constraints.append(itemView.bottomAnchor.constraint(equalTo: gap.topAnchor))
+                    let attribute1: NSLayoutConstraint.Attribute = isVertical ? .bottom : .right
+                    let attribute2: NSLayoutConstraint.Attribute = isVertical ? .top : .left
+                    
+                    constraints.append(NSLayoutConstraint(item: hostView, attribute: attribute1,
+                                                          relatedBy: .equal,
+                                                          toItem: gap, attribute: attribute1,
+                                                          multiplier: 1, constant: 0))
+                    
+                    constraints.append(NSLayoutConstraint(item: itemView, attribute: attribute1,
+                                                          relatedBy: .equal,
+                                                          toItem: gap, attribute: attribute2,
+                                                          multiplier: 1, constant: 0))
+                    
                     
                     if let lastGap = gapGuides.last
                     {
-                        constraints.append(lastGap.heightAnchor.constraint(equalTo: gap.heightAnchor))
+                        let attribute: NSLayoutConstraint.Attribute = isVertical ? .height : .width
+                        
+                        constraints.append(NSLayoutConstraint(item: lastGap, attribute: attribute,
+                                                              relatedBy: .equal,
+                                                              toItem: gap, attribute: attribute,
+                                                              multiplier: 1, constant: 0))
                     }
                     
                     hostView.addLayoutGuide(gap)
@@ -157,5 +166,170 @@ extension Flux
         }
         
         NSLayoutConstraint.activate(constraints)
+    }
+    
+    private func mainStartMargin(for hostAxis: NSLayoutConstraint.Axis) -> CGFloat
+    {
+        return (hostAxis == .vertical) ? topMargin.value : leftMargin.value
+    }
+    
+    private func mainEndMargin(for hostAxis: NSLayoutConstraint.Axis) -> CGFloat
+    {
+        return (hostAxis == .vertical) ? bottomMargin.value : rightMargin.value
+    }
+    
+    private func crossStartMargin(for hostAxis: NSLayoutConstraint.Axis) -> CGFloat
+    {
+        return (hostAxis == .horizontal) ? topMargin.value : leftMargin.value
+    }
+    
+    private func crossEndMargin(for hostAxis: NSLayoutConstraint.Axis) -> CGFloat
+    {
+        return (hostAxis == .horizontal) ? bottomMargin.value : rightMargin.value
+    }
+    
+    // Констрейнт начала по основной оси.
+    // Для column это top, для row - left
+    private class func makeMainStart(item: Flux, prevItem: Flux?, hostItem: Flux) -> NSLayoutConstraint?
+    {
+        guard let itemView = item.view, let hostView = hostItem.view else { return nil }
+        
+        let isVertical = (hostItem.axis == .vertical)
+        
+        if let prevItem = prevItem, let prevItemView = prevItem.view
+        {
+            let constant = item.mainStartMargin(for: hostItem.axis) + prevItem.mainEndMargin(for: hostItem.axis)
+            var relation: NSLayoutConstraint.Relation = .equal
+            
+            let attribute1: NSLayoutConstraint.Attribute = isVertical ? .top : .left
+            let attribute2: NSLayoutConstraint.Attribute = isVertical ? .bottom : .right
+            
+            if hostItem.justifyContent == .spaceBetween
+            {
+                relation = .greaterThanOrEqual
+            }
+            
+            return NSLayoutConstraint(item: itemView, attribute: attribute1,
+                                      relatedBy: relation,
+                                      toItem: prevItemView, attribute: attribute2,
+                                      multiplier: 1, constant: constant)
+        }
+        else
+        {
+            let constant = item.mainStartMargin(for: hostItem.axis)
+            var relation: NSLayoutConstraint.Relation = .equal
+            
+            let attribute1: NSLayoutConstraint.Attribute = isVertical ? .top : .left
+            let attribute2: NSLayoutConstraint.Attribute = isVertical ? .top : .left
+            
+            if hostItem.justifyContent == .center || hostItem.justifyContent == .end
+            {
+                relation = .greaterThanOrEqual
+            }
+            
+            return NSLayoutConstraint(item: itemView, attribute: attribute1,
+                                      relatedBy: relation,
+                                      toItem: hostView, attribute: attribute2,
+                                      multiplier: 1, constant: constant)
+        }
+    }
+    
+    // Констрейнт конца последнего элемента по основной оси.
+    // Для column это bottom, для row - right
+    private class func makeMainEnd(item: Flux, hostItem: Flux) -> NSLayoutConstraint?
+    {
+        guard let itemView = item.view, let hostView = hostItem.view else { return nil }
+        
+        let isVertical = (hostItem.axis == .vertical)
+        
+        let constant = -item.mainEndMargin(for: hostItem.axis)
+        
+        var relation: NSLayoutConstraint.Relation = .equal
+        
+        let attribute1: NSLayoutConstraint.Attribute = isVertical ? .bottom : .right
+        let attribute2: NSLayoutConstraint.Attribute = isVertical ? .bottom : .right
+        
+        if hostItem.justifyContent == .center || hostItem.justifyContent == .start
+        {
+            relation = .lessThanOrEqual
+        }
+        
+        return NSLayoutConstraint(item: itemView, attribute: attribute1,
+                                  relatedBy: relation,
+                                  toItem: hostView, attribute: attribute2,
+                                  multiplier: 1, constant: constant)
+    }
+    
+    // Констрейнт начала элемента по побочной оси.
+    // Для column это left, для row - top
+    private class func makeCrossStart(item: Flux, hostItem: Flux) -> NSLayoutConstraint?
+    {
+        guard let itemView = item.view, let hostView = hostItem.view else { return nil }
+        
+        let isVertical = (hostItem.axis == .vertical)
+        
+        let constant = item.crossStartMargin(for: hostItem.axis)
+        
+        var relation: NSLayoutConstraint.Relation = .greaterThanOrEqual
+        
+        let attribute1: NSLayoutConstraint.Attribute = isVertical ? .left : .top
+        let attribute2: NSLayoutConstraint.Attribute = isVertical ? .left : .top
+        
+        let itemAlign = item.alignSelf ?? hostItem.alignItems
+        
+        if itemAlign == .stretch || itemAlign == .start
+        {
+            relation = .equal
+        }
+        
+        return NSLayoutConstraint(item: itemView, attribute: attribute1,
+                                  relatedBy: relation,
+                                  toItem: hostView, attribute: attribute2,
+                                  multiplier: 1, constant: constant)
+    }
+    
+    // Констрейнт конца элемента по побочной оси.
+    // Для column это right, для row - bottom
+    private class func makeCrossEnd(item: Flux, hostItem: Flux) -> NSLayoutConstraint?
+    {
+        guard let itemView = item.view, let hostView = hostItem.view else { return nil }
+        
+        let isVertical = (hostItem.axis == .vertical)
+        
+        let constant = -item.crossEndMargin(for: hostItem.axis)
+        
+        var relation: NSLayoutConstraint.Relation = .lessThanOrEqual
+        
+        let attribute1: NSLayoutConstraint.Attribute = isVertical ? .right : .bottom
+        let attribute2: NSLayoutConstraint.Attribute = isVertical ? .right : .bottom
+        
+        let itemAlign = item.alignSelf ?? hostItem.alignItems
+        
+        if itemAlign == .stretch || itemAlign == .end
+        {
+            relation = .equal
+        }
+        
+        return NSLayoutConstraint(item: itemView, attribute: attribute1,
+                                  relatedBy: relation,
+                                  toItem: hostView, attribute: attribute2,
+                                  multiplier: 1, constant: constant)
+    }
+    
+    // Констрейнт центрирования элемента по побочной оси.
+    // Для column это centerX, для row - centerY
+    private class func makeCrossCenter(item: Flux, hostItem: Flux) -> NSLayoutConstraint?
+    {
+        guard let itemView = item.view, let hostView = hostItem.view else { return nil }
+        
+        let isVertical = (hostItem.axis == .vertical)
+        
+        let attribute1: NSLayoutConstraint.Attribute = isVertical ? .centerX : .centerY
+        let attribute2: NSLayoutConstraint.Attribute = isVertical ? .centerX : .centerY
+        
+        return NSLayoutConstraint(item: itemView, attribute: attribute1,
+                                  relatedBy: .equal,
+                                  toItem: hostView, attribute: attribute2,
+                                  multiplier: 1, constant: 0)
     }
 }
