@@ -22,6 +22,12 @@ public final class Flux
     
     internal var position: Position = .relative
     
+    internal var absoluteTop: CGFloat?
+    internal var absoluteLeft: CGFloat?
+    internal var absoluteBottom: CGFloat?
+    internal var absoluteRight: CGFloat?
+    internal var absoluteItems: [Flux] = []
+    
     internal var topMargin: Margin = .zero
     internal var leftMargin: Margin = .zero
     internal var bottomMargin: Margin = .zero
@@ -41,26 +47,6 @@ public final class Flux
     public init(_ view: UIView)
     {
         self.view = view
-    }
-    
-    /// Описание дочерних элементов на манер SwiftUI
-    public func addItems(@FluxLayoutBuilder builder: () -> [Flux])
-    {
-        guard let host = self.view else { return }
-        
-        for item in builder()
-        {
-            guard let itemView = item.view else { continue }
-            
-            host.addSubview(itemView)
-            items.append(item)
-            
-            item.didHidden = { [weak self] flux, hidden in
-                self?.item(flux, didHidden: hidden)
-            }
-        }
-        
-        layout()
     }
 
     /// Добавление нового элемента в иерархию
@@ -177,6 +163,7 @@ public extension Flux
     
     enum JustifyContent
     {
+        case fill
         case start
         case center
         case end
@@ -225,13 +212,6 @@ extension Flux
         justifyContent = value
         return self
     }
-    
-    @discardableResult
-    public func position(_ value: Position) -> Flux
-    {
-        position = value
-        return self
-    }
 }
 
 extension Flux
@@ -251,7 +231,43 @@ extension Flux
     }
 }
     
+extension Flux
+{
+    @discardableResult
+    public func position(_ value: Position) -> Flux
+    {
+        position = value
+        return self
+    }
+    
+    @discardableResult
+    public func left(_ value: CGFloat) -> Flux
+    {
+        absoluteLeft = value
+        return self
+    }
+    
+    @discardableResult
+    public func top(_ value: CGFloat) -> Flux
+    {
+        absoluteTop = value
+        return self
+    }
 
+    @discardableResult
+    public func bottom(_ value: CGFloat) -> Flux
+    {
+        absoluteBottom = value
+        return self
+    }
+    
+    @discardableResult
+    public func right(_ value: CGFloat) -> Flux
+    {
+        absoluteRight = value
+        return self
+    }
+}
 
 extension Flux
 {
@@ -294,15 +310,6 @@ private extension UIView
         guard let selfIndex = parentSubviews.firstIndex(of: self), selfIndex > 0 else { return nil }
         
         return parentSubviews[selfIndex - 1]
-    }
-}
-
-@resultBuilder
-public struct FluxLayoutBuilder
-{
-    static func buildBlock(_ components: Flux...) -> [Flux]
-    {
-        return components
     }
 }
 

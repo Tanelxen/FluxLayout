@@ -13,78 +13,77 @@ class ViewController: UIViewController
     @IBOutlet weak var containerView: UIView!
     @IBOutlet weak var stackView: UIStackView!
     
+    let headerLabel = UILabel()
+    let avatarImageView = UIImageView()
+    let nameLabel = UILabel()
+    let positionLabel = UILabel()
+    let messageLabel = UILabel()
+    
     override func viewDidLoad()
     {
         super.viewDidLoad()
         
-        let avatar = UIImageView()
-        avatar.image = UIImage(named: "avatar")
-        avatar.layer.cornerRadius = 50
-        avatar.clipsToBounds = true
-        
-        let headerLabel = UILabel()
-        headerLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
-        headerLabel.numberOfLines = 0
-        headerLabel.text = "FluxLayout Test"
-        
-        let titleLabel = UILabel()
-        titleLabel.backgroundColor = .magenta
-        titleLabel.font = UIFont.systemFont(ofSize: 20, weight: .regular)
-        titleLabel.numberOfLines = 0
-        titleLabel.text = "title"
-        
-        let subtitleLabel = UILabel()
-        subtitleLabel.backgroundColor = .cyan
-        subtitleLabel.font = UIFont.systemFont(ofSize: 20, weight: .regular)
-        subtitleLabel.numberOfLines = 0
-        subtitleLabel.text = "subtitle"
-        
-        let footerLabel = UILabel()
-        footerLabel.backgroundColor = .green
-        footerLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
-        footerLabel.numberOfLines = 0
-        footerLabel.text = "footer"
-        
+        setupStyles()
+        setupLayout()
+        setupData()
+    }
+    
+    private func setupLayout()
+    {
         Flux(containerView).direction(.column).justifyContent(.start).alignItems(.stretch).define
         {
-            $0.addItem(headerLabel).margin(top: 24, left: 16, bottom: 0, right: 16)
+            $0.addItem(headerLabel).name("header").marginTop(24).alignSelf(.center)
             
-            $0.addItem().backgroundColor(.systemGray2).height(0.5).marginTop(24).marginHorizontal(16)
+            //Separator
+            $0.addItem().name("separator").backgroundColor(.systemGray2).height(0.5).marginTop(24).marginHorizontal(16)
             
-            $0.addItem().direction(.row).marginTop(16).marginHorizontal(16).define
+            //User
+            $0.addItem().name("user").direction(.row).justifyContent(.fill).alignItems(.start).marginTop(16).marginHorizontal(16).define
             {
-                $0.addItem(avatar).width(100).height(100)
+                $0.addItem(avatarImageView).name("avatar").width(100).height(100)
                 
-                $0.addItem().marginTop(6).marginHorizontal(16).define
+                //Dot
+                $0.addItem().backgroundColor(.green).position(.absolute).top(9).left(9).width(10).height(10)
+                
+                $0.addItem().name("info").marginTop(6).marginLeft(16).define
                 {
-                    let nameLabel = UILabel()
-                    nameLabel.font = UIFont.systemFont(ofSize: 20, weight: .medium)
-                    nameLabel.numberOfLines = 0
-                    nameLabel.text = "Theodor Artemenkov"
-                    
-                    $0.addItem(nameLabel)
-                    
-                    let positionLabel = UILabel()
-                    positionLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-                    positionLabel.textColor = .systemGray2
-                    positionLabel.numberOfLines = 0
-                    positionLabel.text = "iOS Developer"
-                    
-                    $0.addItem(positionLabel).marginTop(8)
+                    $0.addItem(nameLabel).name("name")
+                    $0.addItem(positionLabel).name("position").marginTop(8)
                 }
             }
             
-            let messageLabel = UILabel()
-            messageLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
-            messageLabel.numberOfLines = 0
-            messageLabel.text = "Если бы мы знали, что это такое. Но мы не знаем, что это такое."
-            
-            $0.addItem(messageLabel).marginTop(16).marginHorizontal(16)
-            
-//            $0.addItem(titleLabel)
-//            $0.addItem(subtitleLabel)
-//            $0.addItem(footerLabel)
+            $0.addItem(messageLabel).name("message").marginTop(16).marginHorizontal(16)
         }
+    }
+    
+    private func setupStyles()
+    {
+        containerView.backgroundColor = .white
+        
+        headerLabel.font = UIFont.systemFont(ofSize: 20, weight: .bold)
+        headerLabel.numberOfLines = 0
+        
+        avatarImageView.image = UIImage(named: "avatar")
+        avatarImageView.layer.cornerRadius = 50
+        avatarImageView.clipsToBounds = true
+        
+        nameLabel.font = UIFont.systemFont(ofSize: 20, weight: .medium)
+        nameLabel.numberOfLines = 0
+        
+        positionLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        positionLabel.textColor = .systemGray2
+        positionLabel.numberOfLines = 0
+        
+        messageLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
+        messageLabel.numberOfLines = 0
+    }
+    
+    private func setupData()
+    {
+        headerLabel.text = "FluxLayout"
+        nameLabel.text = "Theodor Artemenkov"
+        positionLabel.text = "iOS Developer"
+        messageLabel.text = "Если бы мы знали, что это такое. Но мы не знаем, что это такое."
     }
 }
 

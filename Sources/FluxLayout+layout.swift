@@ -17,6 +17,9 @@ extension Flux
         
         var constraints: [NSLayoutConstraint] = []
         
+        absoluteItems = items.filter { $0.position == .absolute }
+        items.removeAll(where: { $0.position == .absolute })
+        
         for (index, item) in items.enumerated()
         {
             guard let itemView = item.view, let hostView = self.view else { continue }
@@ -162,6 +165,37 @@ extension Flux
                     hostView.addLayoutGuide(gap)
                     gapGuides.append(gap)
                 }
+            }
+        }
+        
+        for item in absoluteItems
+        {
+            guard let itemView = item.view, let hostView = self.view else { continue }
+            
+            itemView.translatesAutoresizingMaskIntoConstraints = false
+            
+            if let absoluteTop = item.absoluteTop {
+                constraints.append(itemView.topAnchor.constraint(equalTo: hostView.topAnchor, constant: absoluteTop))
+            }
+            
+            if let absoluteLeft = item.absoluteLeft {
+                constraints.append(itemView.leftAnchor.constraint(equalTo: hostView.leftAnchor, constant: absoluteLeft))
+            }
+            
+            if let absoluteBottom = item.absoluteBottom {
+                constraints.append(itemView.bottomAnchor.constraint(equalTo: hostView.bottomAnchor, constant: -absoluteBottom))
+            }
+            
+            if let absoluteRight = item.absoluteRight {
+                constraints.append(itemView.rightAnchor.constraint(equalTo: hostView.rightAnchor, constant: -absoluteRight))
+            }
+            
+            if let width = item.width {
+                constraints.append(itemView.widthAnchor.constraint(equalToConstant: width))
+            }
+            
+            if let height = item.height {
+                constraints.append(itemView.heightAnchor.constraint(equalToConstant: height))
             }
         }
         
